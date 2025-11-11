@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>精彩瞬间倒计时</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+            background: linear-gradient(135deg, #ff1744, #d32f2f, #b71c1c);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(14px);
+            border-radius: 28px;
+            padding: 60px 70px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            max-width: 780px;
+            width: min(92%, 780px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before,
+        .container::after {
+            content: '';
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.35), rgba(255,255,255,0));
+            z-index: 0;
+            filter: blur(0.5px);
+        }
+
+        .container::before {
+            top: -80px;
+            left: -40px;
+        }
+
+        .container::after {
+            bottom: -100px;
+            right: -60px;
+        }
+
+        .title {
+            position: relative;
+            z-index: 1;
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: 4px;
+            text-shadow: 8px 8px 30px rgba(0, 0, 0, 0.55);
+            background: linear-gradient(45deg, #ffffff, #ffebee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            position: relative;
+            z-index: 1;
+            font-size: 1.35rem;
+            margin-bottom: 40px;
+            opacity: 0.92;
+            font-weight: 400;
+            letter-spacing: 2px;
+        }
+
+        .countdown-container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 50px 0;
+            flex-wrap: wrap;
+        }
+
+        .time-unit {
+            background: rgba(255, 255, 255, 0.18);
+            border-radius: 22px;
+            padding: 36px 48px;
+            min-width: 170px;
+            min-height: 200px;
+            border: 2px solid rgba(255, 255, 255, 0.28);
+            backdrop-filter: blur(8px);
+            position: relative;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .time-unit:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.05);
+        }
+
+        .time-adjustment {
+            position: absolute;
+            right: 18px;
+            top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .time-unit:hover .time-adjustment {
+            opacity: 1;
+        }
+
+        .adjust-btn {
+            width: 26px;
+            height: 26px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            border-radius: 50%;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .adjust-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(1.1);
+        }
+
+        .adjust-btn:active {
+            transform: scale(0.95);
+        }
+
+        .time-number {
+            font-size: 4.5rem;
+            font-weight: 700;
+            display: block;
+            text-shadow: 4px 4px 18px rgba(0, 0, 0, 0.45);
+            margin-bottom: 12px;
+        }
+
+        .time-label {
+            font-size: 1.2rem;
+            opacity: 0.85;
+            letter-spacing: 4px;
+        }
+
+        .controls {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.38);
+            color: white;
+            padding: 14px 36px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(6px);
+            min-width: 120px;
+            letter-spacing: 2px;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.32);
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.25);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.pause {
+            background: rgba(255, 193, 7, 0.3);
+            border-color: rgba(255, 193, 7, 0.5);
+            display: none;
+        }
+
+        .btn.reset {
+            background: rgba(244, 67, 54, 0.3);
+            border-color: rgba(244, 67, 54, 0.5);
+        }
+
+        .status {
+            position: relative;
+            z-index: 1;
+            margin-top: 36px;
+            font-size: 1.2rem;
+            opacity: 0.85;
+            letter-spacing: 1px;
+        }
+
+        .fireworks {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .firework {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            animation: explode 1s ease-out forwards;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(20);
+                opacity: 0;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 24px;
+                border-radius: 24px;
+            }
+
+            .title {
+                font-size: 2.6rem;
+                letter-spacing: 3px;
+            }
+            
+            .subtitle {
+                font-size: 1.1rem;
+                letter-spacing: 1px;
+            }
+            
+            .countdown-container {
+                gap: 24px;
+                margin: 40px 0;
+            }
+            
+            .time-unit {
+                min-width: 140px;
+                min-height: 160px;
+                padding: 28px;
+            }
+
+            .time-number {
+                font-size: 3.4rem;
+            }
+
+            .time-label {
+                font-size: 1rem;
+                letter-spacing: 3px;
+            }
+
+            .adjust-btn {
+                width: 22px;
+                height: 22px;
+                font-size: 12px;
+            }
+
+            .btn {
+                min-width: 110px;
+                padding: 12px 28px;
+            }
+        }
+    </style>
+</head>
+    <body>
+    <div class="fireworks" id="fireworks"></div>
+    
+    <div class="container">
+            <h1 class="title">精彩瞬间倒计时</h1>
+            <p class="subtitle">保持状态，舞台即将开启</p>
+        
+        <div class="countdown-container">
+            <div class="time-unit">
+                <span class="time-number" id="minutes">00</span>
+                <div class="time-label">分</div>
+                <div class="time-adjustment">
+                    <div class="adjust-btn" id="minUp">▲</div>
+                    <div class="adjust-btn" id="minDown">▼</div>
+                </div>
+            </div>
+            <div class="time-unit">
+                <span class="time-number" id="seconds">00</span>
+                <div class="time-label">秒</div>
+                <div class="time-adjustment">
+                    <div class="adjust-btn" id="secUp">▲</div>
+                    <div class="adjust-btn" id="secDown">▼</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" id="startBtn">开始</button>
+            <button class="btn pause" id="pauseBtn">暂停</button>
+            <button class="btn reset" id="resetBtn">重置</button>
+        </div>
+        
+        <div class="status" id="status">点击"开始"按钮开始倒计时</div>
+    </div>
+
+    <script>
+        class CountdownTimer {
+            constructor() {
+                this.targetDate = new Date('2025-06-15T19:00:00'); // 设置目标日期
+                this.initialTime = 5 * 60 * 1000; // 初始设置为5分钟（300秒）
+                this.userSetTime = this.initialTime; // 用户设置的时间，默认为初始时间
+                this.isRunning = false;
+                this.isPaused = false;
+                this.intervalId = null;
+                this.remainingTime = 0;
+                
+                this.elements = {
+                    minutes: document.getElementById('minutes'),
+                    seconds: document.getElementById('seconds'),
+                    startBtn: document.getElementById('startBtn'),
+                    pauseBtn: document.getElementById('pauseBtn'),
+                    resetBtn: document.getElementById('resetBtn'),
+                    status: document.getElementById('status'),
+                    fireworks: document.getElementById('fireworks'),
+                    minUp: document.getElementById('minUp'),
+                    minDown: document.getElementById('minDown'),
+                    secUp: document.getElementById('secUp'),
+                    secDown: document.getElementById('secDown')
+                };
+                
+                this.init();
+            }
+            
+            init() {
+                this.elements.startBtn.addEventListener('click', () => this.start());
+                this.elements.pauseBtn.addEventListener('click', () => this.pause());
+                this.elements.resetBtn.addEventListener('click', () => this.reset());
+                
+                // 时间调整按钮事件
+                this.elements.minUp.addEventListener('click', () => this.adjustMinutes(1));
+                this.elements.minDown.addEventListener('click', () => this.adjustMinutes(-1));
+                this.elements.secUp.addEventListener('click', () => this.adjustSeconds(1));
+                this.elements.secDown.addEventListener('click', () => this.adjustSeconds(-1));
+                
+                this.remainingTime = this.userSetTime;
+                this.updateDisplay();
+                this.updateStatus('点击"开始"按钮开始倒计时');
+            }
+            
+            start() {
+                if (!this.isRunning) {
+                    this.isRunning = true;
+                    this.isPaused = false;
+                    this.intervalId = setInterval(() => this.updateCountdown(), 1000);
+                    this.updateStatus('倒计时进行中...');
+                    this.elements.startBtn.textContent = '继续';
+                    this.elements.startBtn.style.display = 'none';
+                    this.elements.pauseBtn.style.display = 'inline-block';
+                }
+            }
+            
+            pause() {
+                if (this.isRunning) {
+                    this.isRunning = false;
+                    this.isPaused = true;
+                    clearInterval(this.intervalId);
+                    this.updateStatus('倒计时已暂停');
+                    this.elements.startBtn.style.display = 'inline-block';
+                    this.elements.pauseBtn.style.display = 'none';
+                }
+            }
+            
+            reset() {
+                this.isRunning = false;
+                this.isPaused = false;
+                clearInterval(this.intervalId);
+                this.remainingTime = this.userSetTime;
+                this.updateDisplay();
+                this.updateStatus('倒计时已重置');
+                this.elements.startBtn.textContent = '开始';
+                this.elements.startBtn.style.display = 'inline-block';
+                this.elements.pauseBtn.style.display = 'none';
+            }
+            
+            updateCountdown() {
+                if (this.remainingTime <= 0) {
+                    this.timeUp();
+                    return;
+                }
+                
+                this.remainingTime -= 1000;
+                this.updateDisplay();
+            }
+            
+            updateDisplay() {
+                const time = this.remainingTime || this.userSetTime;
+                
+                if (time <= 0) {
+                    this.timeUp();
+                    return;
+                }
+                
+                const minutes = Math.floor(time / (1000 * 60));
+                const seconds = Math.floor((time % (1000 * 60)) / 1000);
+                
+                this.elements.minutes.textContent = minutes.toString().padStart(2, '0');
+                this.elements.seconds.textContent = seconds.toString().padStart(2, '0');
+            }
+            
+            timeUp() {
+                this.isRunning = false;
+                clearInterval(this.intervalId);
+                this.updateStatus('🎉 比赛时间到！');
+                
+                // 添加脉冲效果
+                document.querySelector('.container').classList.add('pulse');
+                
+                // 创建烟花效果
+                this.createFireworks();
+                
+                // 重置按钮状态
+                this.elements.startBtn.style.display = 'none';
+                this.elements.pauseBtn.style.display = 'none';
+            }
+            
+            createFireworks() {
+                const colors = ['#ff1744', '#ffeb3b', '#4caf50', '#2196f3', '#9c27b0'];
+                
+                for (let i = 0; i < 50; i++) {
+                    setTimeout(() => {
+                        const firework = document.createElement('div');
+                        firework.className = 'firework';
+                        firework.style.left = Math.random() * 100 + '%';
+                        firework.style.top = Math.random() * 100 + '%';
+                        firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                        
+                        this.elements.fireworks.appendChild(firework);
+                        
+                        setTimeout(() => {
+                            firework.remove();
+                        }, 1000);
+                    }, i * 100);
+                }
+            }
+            
+            adjustMinutes(delta) {
+                if (this.isRunning) return; // 运行时不允许调整
+                
+                const currentMinutes = Math.floor(this.remainingTime / (1000 * 60));
+                const newMinutes = Math.max(0, Math.min(99, currentMinutes + delta));
+                const currentSeconds = Math.floor((this.remainingTime % (1000 * 60)) / 1000);
+                
+                this.remainingTime = newMinutes * 60 * 1000 + currentSeconds * 1000;
+                this.userSetTime = this.remainingTime; // 更新用户设置的时间
+                this.updateDisplay();
+                this.updateStatus(`时间已调整为 ${newMinutes.toString().padStart(2, '0')}:${currentSeconds.toString().padStart(2, '0')}`);
+            }
+            
+            adjustSeconds(delta) {
+                if (this.isRunning) return; // 运行时不允许调整
+                
+                const currentMinutes = Math.floor(this.remainingTime / (1000 * 60));
+                const currentSeconds = Math.floor((this.remainingTime % (1000 * 60)) / 1000);
+                const newSeconds = Math.max(0, Math.min(59, currentSeconds + delta));
+                
+                this.remainingTime = currentMinutes * 60 * 1000 + newSeconds * 1000;
+                this.userSetTime = this.remainingTime; // 更新用户设置的时间
+                this.updateDisplay();
+                this.updateStatus(`时间已调整为 ${currentMinutes.toString().padStart(2, '0')}:${newSeconds.toString().padStart(2, '0')}`);
+            }
+            
+            updateStatus(message) {
+                this.elements.status.textContent = message;
+            }
+        }
+        
+        // 初始化倒计时器
+        document.addEventListener('DOMContentLoaded', () => {
+            new CountdownTimer();
+        });
+    </script>
+</body>
+</html>
